@@ -1,4 +1,3 @@
-// src/app/tokens/[token_id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -57,29 +56,68 @@ export default function TokenDetailsPage() {
             setLoading(true);
             setError(null);
             try {
-                // Fetch token details
+                // Fetch and log token details
+                console.log('Fetching token details for ID:', tokenId);
                 const tokens = await fetchAcceptedTokens();
+                console.log('All tokens received:', tokens);
+                
                 const currentToken = tokens.find(t => t.token_id === tokenId);
+                console.log('Current token found:', currentToken);
                 
                 if (!currentToken) {
                     throw new Error('Token not found');
                 }
                 
                 setToken(currentToken);
-
-                // Fetch transactions
+    
+                // Fetch and log transactions
+                console.log('Fetching transactions for token:', tokenId);
                 const txData = await fetchTokenTransactions(tokenId);
-                setTransactions(txData.transactions.sort((a, b) => 
+                console.log('Raw transaction data received:', txData);
+                
+                // Log detailed transaction information
+                if (txData.transactions && txData.transactions.length > 0) {
+                    console.log('First transaction details:', {
+                        txtype: txData.transactions[0].txtype,
+                        traderpublickey: txData.transactions[0].traderpublickey,
+                        wallet_type: txData.transactions[0].wallet_type,
+                        tokenamount: txData.transactions[0].tokenamount,
+                        created_at: txData.transactions[0].created_at,
+                        helius_total_value: txData.transactions[0].helius_total_value,
+                        vsolinbondingcurve: txData.transactions[0].vsolinbondingcurve
+                    });
+                    
+                    // Log counts of null values for each field
+                    const nullCounts = txData.transactions.reduce((acc, tx) => ({
+                        txtype: acc.txtype + (tx.txtype ? 0 : 1),
+                        traderpublickey: acc.traderpublickey + (tx.traderpublickey ? 0 : 1),
+                        wallet_type: acc.wallet_type + (tx.wallet_type ? 0 : 1),
+                        tokenamount: acc.tokenamount + (tx.tokenamount ? 0 : 1),
+                        created_at: acc.created_at + (tx.created_at ? 0 : 1)
+                    }), {
+                        txtype: 0,
+                        traderpublickey: 0,
+                        wallet_type: 0,
+                        tokenamount: 0,
+                        created_at: 0
+                    });
+                    
+                    console.log('Null value counts in transactions:', nullCounts);
+                }
+    
+                const sortedTransactions = txData.transactions.sort((a, b) => 
                     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-                ));
+                );
+                setTransactions(sortedTransactions);
+                
             } catch (err) {
+                console.error('Error loading token details:', err);
                 setError(err instanceof Error ? err.message : 'Failed to load token details');
-                console.error(err);
             } finally {
                 setLoading(false);
             }
         }
-
+    
         if (tokenId) {
             loadTokenDetails();
         }
@@ -121,7 +159,6 @@ export default function TokenDetailsPage() {
                     {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
                 </h1>
                 
-                {/* Re-use the same token information layout from TokenCard */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {/* Basic Information */}
                     <div className="space-y-2">
@@ -165,7 +202,6 @@ export default function TokenDetailsPage() {
                                     <th className="px-4 py-2 text-left">Type</th>
                                     <th className="px-4 py-2 text-right">Amount</th>
                                     <th className="px-4 py-2 text-left">Wallet Type</th>
-                                    <th className="px-4 py-2 text-right">Volume (SOL)</th>
                                     <th className="px-4 py-2 text-left">Created At</th>
                                 </tr>
                             </thead>
@@ -173,23 +209,18 @@ export default function TokenDetailsPage() {
                                 {transactions.map((tx) => (
                                     <tr key={tx.signature} className="border-t">
                                         <td className="px-4 py-2 font-mono text-sm">
-                                            {tx.trader_address || 'null'}
+                                            {tx.traderpublickey || 'null'}
                                         </td>
                                         <td className="px-4 py-2 capitalize">
-                                            {tx.tx_type || 'null'}
+                                            {tx.txtype || 'null'}
                                         </td>
                                         <td className="px-4 py-2 text-right">
-                                            {tx.token_amount !== null && tx.token_amount !== undefined 
-                                                ? formatNumber(tx.token_amount)
+                                            {tx.tokenamount 
+                                                ? formatNumber(tx.tokenamount)
                                                 : 'null'}
                                         </td>
                                         <td className="px-4 py-2 capitalize">
                                             {tx.wallet_type || 'null'}
-                                        </td>
-                                        <td className="px-4 py-2 text-right">
-                                            {tx.volume_sol !== null && tx.volume_sol !== undefined 
-                                                ? formatSol(tx.volume_sol)
-                                                : 'null'}
                                         </td>
                                         <td className="px-4 py-2">
                                             {tx.created_at 
