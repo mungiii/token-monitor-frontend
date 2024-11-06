@@ -5,6 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import { Token, Transaction } from '@/types/token';
 import { fetchAcceptedTokens, fetchTokenTransactions } from '@/utils/api';
 
+interface GroupedTransactions {
+    [key: string]: {
+        transactions: Transaction[];
+        count: number;
+    }
+}
+
+
 export default function TokenDetailsPage() {
     const router = useRouter();
     const params = useParams();
@@ -56,6 +64,26 @@ export default function TokenDetailsPage() {
             minute: '2-digit'
         });
     };
+
+    const groupedTransactions = transactions.reduce((groups: GroupedTransactions, transaction) => {
+        const key = transaction.traderpublickey || 'unknown';
+        if (!groups[key]) {
+            groups[key] = {
+                transactions: [],
+                count: 0
+            };
+        }
+        groups[key].transactions.push(transaction);
+        groups[key].count += 1;
+        return groups;
+    }, {});
+    
+    // Sort grouped transactions by earliest transaction
+    const sortedGroups = Object.entries(groupedTransactions).sort(([, a], [, b]) => {
+        const aDate = new Date(a.transactions[0].created_at).getTime();
+        const bDate = new Date(b.transactions[0].created_at).getTime();
+        return aDate - bDate;
+    });
 
     useEffect(() => {
         async function loadTokenDetails() {
@@ -238,44 +266,64 @@ export default function TokenDetailsPage() {
             <div className="border rounded-lg p-6 bg-white shadow-sm">
                 <h2 className="text-2xl font-bold mb-4">Transactions</h2>
                 
-                {transactions.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full">
-                            <thead>
-                                <tr className="bg-gray-50">
-                                    <th className="px-4 py-2 text-left">Trader Address</th>
-                                    <th className="px-4 py-2 text-left">Type</th>
-                                    <th className="px-4 py-2 text-right">Amount</th>
-                                    <th className="px-4 py-2 text-left">Wallet Type</th>
-                                    <th className="px-4 py-2 text-left">Created At</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {transactions.map((tx) => (
-                                    <tr key={tx.signature} className="border-t">
-                                        <td className="px-4 py-2 font-mono text-sm">
-                                            {tx.traderpublickey || 'null'}
-                                        </td>
-                                        <td className="px-4 py-2 capitalize">
-                                            {tx.txtype || 'null'}
-                                        </td>
-                                        <td className="px-4 py-2 text-right">
-                                            {tx.tokenamount 
-                                                ? formatNumber(tx.tokenamount)
-                                                : 'null'}
-                                        </td>
-                                        <td className="px-4 py-2 capitalize">
-                                            {tx.wallet_type || 'null'}
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            {tx.created_at 
-                                                ? formatDate(tx.created_at)
-                                                : 'null'}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {sortedGroups.length > 0 ? (
+                    <div className="space-y-6">
+                        {sortedGroups.map(([traderAddress, group]) => (
+                            <div key={traderAddress} className="border rounded-lg">
+                                {/* Trader Header */}
+                                <div className="bg-gray-50 p-4 rounded-t-lg border-b">
+                                    <div className="flex items-center justify-between">
+                                        <button
+                                            onClick={() => router.push(`/wallets/${traderAddress}?from_token=${token.token_id}`)}
+                                            className="text-blue-600 hover:text-blue-800 font-mono text-sm underline"
+                                        >
+                                            {traderAddress}
+                                        </button>
+                                        <span className="text-sm text-gray-600">
+                                            {group.count} transaction{group.count !== 1 ? 's' : ''}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Transactions Table */}
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full">
+                                        <thead>
+                                            <tr className="bg-gray-50">
+                                                <th className="px-4 py-2 text-left">Type</th>
+                                                <th className="px-4 py-2 text-right">Amount</th>
+                                                <th className="px-4 py-2 text-left">Wallet Type</th>
+                                                <th className="px-4 py-2 text-left">Created At</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {group.transactions
+                                                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                                .map((tx) => (
+                                                    <tr key={tx.signature} className="border-t">
+                                                        <td className="px-4 py-2 capitalize">
+                                                            {tx.txtype || 'null'}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-right">
+                                                            {tx.tokenamount 
+                                                                ? formatNumber(tx.tokenamount)
+                                                                : 'null'}
+                                                        </td>
+                                                        <td className="px-4 py-2 capitalize">
+                                                            {tx.wallet_type || 'null'}
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            {tx.created_at 
+                                                                ? formatDate(tx.created_at)
+                                                                : 'null'}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="text-center py-4 text-gray-500">
