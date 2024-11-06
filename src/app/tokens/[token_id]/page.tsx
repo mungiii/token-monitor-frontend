@@ -173,22 +173,28 @@ export default function TokenDetailsPage() {
                                 {transactions.map((tx) => (
                                     <tr key={tx.signature} className="border-t">
                                         <td className="px-4 py-2 font-mono text-sm">
-                                            {tx.trader_address}
+                                            {tx.trader_address || 'null'}
                                         </td>
                                         <td className="px-4 py-2 capitalize">
-                                            {tx.tx_type}
+                                            {tx.tx_type || 'null'}
                                         </td>
                                         <td className="px-4 py-2 text-right">
-                                            {formatNumber(tx.token_amount)}
+                                            {tx.token_amount !== null && tx.token_amount !== undefined 
+                                                ? formatNumber(tx.token_amount)
+                                                : 'null'}
                                         </td>
                                         <td className="px-4 py-2 capitalize">
-                                            {tx.wallet_type}
+                                            {tx.wallet_type || 'null'}
                                         </td>
                                         <td className="px-4 py-2 text-right">
-                                            {formatSol(tx.volume_sol)}
+                                            {tx.volume_sol !== null && tx.volume_sol !== undefined 
+                                                ? formatSol(tx.volume_sol)
+                                                : 'null'}
                                         </td>
                                         <td className="px-4 py-2">
-                                            {formatDate(tx.created_at)}
+                                            {tx.created_at 
+                                                ? formatDate(tx.created_at)
+                                                : 'null'}
                                         </td>
                                     </tr>
                                 ))}
