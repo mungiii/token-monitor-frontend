@@ -1,3 +1,5 @@
+// src/components/TokenCard.tsx
+
 import { Token } from '@/types/token';
 import { useRouter } from 'next/navigation';
 
@@ -8,7 +10,7 @@ interface TokenCardProps {
 export default function TokenCard({ token }: TokenCardProps) {
     const router = useRouter();
 
-    // Enhanced number formatting functions (keeping your existing ones)
+    // Keep existing formatting functions
     const formatNumber = (value: string | number | null | undefined, options: {
         decimals?: number;
         useCommas?: boolean;
@@ -57,12 +59,43 @@ export default function TokenCard({ token }: TokenCardProps) {
     return (
         <div className="border rounded-lg p-4 mb-4 shadow-sm hover:shadow-md transition-shadow">
             {/* Basic Information */}
-            <div className="mb-4">
+            <div className="mb-4 border-b pb-4">
                 <h3 className="text-lg font-semibold">
                     {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
                 </h3>
-                <p className="text-sm text-gray-600">ID: {token.token_id}</p>
-                <p className="text-sm">{token.description || '[description is null]'}</p>
+                <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
+                <p className="text-sm mt-2">{token.description || '[description is null]'}</p>
+            </div>
+
+            {/* Feature Fields */}
+            <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div>
+                        <p className="text-sm text-gray-600">Days Pre-Acceptance</p>
+                        <p className="font-medium">{token.days_pre_acceptance_criteria || '[null]'}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Wallets Holding</p>
+                        <p className="font-medium">{formatNumber(token.wallets_holding)}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Total Volume</p>
+                        <p className="font-medium">{formatSol(token.total_volume)}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Bot Wallets</p>
+                        <p className="font-medium">{formatNumber(token.suspected_bot_wallets)}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Quality Wallets</p>
+                        <p className="font-medium">{formatNumber(token.quality_wallets)}</p>
+                    </div>
+                    <div>
+                        <p className="text-sm text-gray-600">Non-Bot Volume</p>
+                        <p className="font-medium">{formatSol(token.non_bot_volume)}</p>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -83,40 +116,17 @@ export default function TokenCard({ token }: TokenCardProps) {
                     <p>Current Market Cap: {formatSol(token.market_cap_at_filter)}</p>
                     <p>Filtered At: {formatDate(token.filtered_at)}</p>
                     <p>Criteria Accepted: {formatDate(token.criteria_accepted_date)}</p>
-                    <p>Days Pre-Acceptance: {token.days_pre_acceptance_criteria || '[null]'}</p>
                 </div>
 
-                {/* Volume Statistics */}
+                {/* Ratios and Other Metrics */}
                 <div className="space-y-2">
-                    <h4 className="font-semibold">Volume Statistics</h4>
-                    <p>Total Volume: {formatSol(token.total_volume)}</p>
-                    <p>Bot Volume: {formatSol(token.bot_volume)}</p>
-                    <p>Non-Bot Volume: {formatSol(token.non_bot_volume)}</p>
+                    <h4 className="font-semibold">Additional Metrics</h4>
+                    <p>Bot Wallet Ratio: {formatRatio(token.bot_wallet_ratio)}</p>
+                    <p>Quality/Bot Ratio: {formatRatio(token.quality_to_bot_ratio)}</p>
                     <p>Non-Bot Volume %: {formatRatio(token.non_bot_volume_percentage)}%</p>
-                </div>
-
-                {/* Wallet Statistics */}
-                <div className="space-y-2">
-                    <h4 className="font-semibold">Wallet Statistics</h4>
-                    <p>Total Wallets: {formatNumber(token.total_transacting_wallets)}</p>
-                    <p>Holding Wallets: {formatNumber(token.wallets_holding)}</p>
-                    <p>Bot Wallets: {formatNumber(token.suspected_bot_wallets)}</p>
-                    <p>Quality Wallets: {formatNumber(token.quality_wallets)}</p>
-                </div>
-
-                {/* Transaction Statistics */}
-                <div className="space-y-2">
-                    <h4 className="font-semibold">Transaction Statistics</h4>
                     <p>Total Transactions: {formatNumber(token.total_transactions)}</p>
                     <p>Bot Transactions: {formatNumber(token.bot_transactions)}</p>
                     <p>Non-Bot Transactions: {formatNumber(token.non_bot_transactions)}</p>
-                </div>
-
-                {/* Ratios */}
-                <div className="space-y-2">
-                    <h4 className="font-semibold">Quality Metrics</h4>
-                    <p>Bot Wallet Ratio: {formatRatio(token.bot_wallet_ratio)}</p>
-                    <p>Quality/Bot Ratio: {formatRatio(token.quality_to_bot_ratio)}</p>
                 </div>
             </div>
 
