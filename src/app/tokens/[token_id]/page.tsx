@@ -14,6 +14,12 @@ export default function TokenDetailsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    
+    const formatRatio = (value: string | number | null | undefined) => {
+        if (value == null) return 'N/A';
+        const numValue = typeof value === 'string' ? parseFloat(value) : value;
+        return isNaN(numValue) ? 'N/A' : numValue.toFixed(2);
+    };
 
     // Format functions (same as TokenCard)
     const formatNumber = (value: string | number | null | undefined, options: {
@@ -153,16 +159,52 @@ export default function TokenDetailsPage() {
                 ← Back to Tokens
             </button>
 
-            {/* Token Information */}
+            {/* Token Information - Now matching TokenCard layout */}
             <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm">
-                <h1 className="text-3xl font-bold mb-6">
-                    {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
-                </h1>
-                
+                {/* Basic Information */}
+                <div className="mb-4 border-b pb-4">
+                    <h1 className="text-lg font-semibold">
+                        {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
+                    </h1>
+                    <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
+                    <p className="text-sm mt-2">{token.description || '[description is null]'}</p>
+                </div>
+
+                {/* Feature Fields */}
+                <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <p className="text-sm text-gray-600">Days Pre-Acceptance</p>
+                            <p className="font-medium">{token.days_pre_acceptance_criteria || '[null]'}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Wallets Holding</p>
+                            <p className="font-medium">{formatNumber(token.wallets_holding)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Total Volume</p>
+                            <p className="font-medium">{formatSol(token.total_volume)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Bot Wallets</p>
+                            <p className="font-medium">{formatNumber(token.suspected_bot_wallets)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Quality Wallets</p>
+                            <p className="font-medium">{formatNumber(token.quality_wallets)}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Non-Bot Volume</p>
+                            <p className="font-medium">{formatSol(token.non_bot_volume)}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Basic Information */}
+                    {/* Creation and Status Information */}
                     <div className="space-y-2">
-                        <h2 className="font-semibold">General Information</h2>
+                        <h4 className="font-semibold">General Information</h4>
                         <p>Status: {token.status}</p>
                         <p>Source: {token.source || '[source is null]'}</p>
                         <p>Creator: {token.creator_address || '[creator is null]'}</p>
@@ -172,19 +214,22 @@ export default function TokenDetailsPage() {
 
                     {/* Market Information */}
                     <div className="space-y-2">
-                        <h2 className="font-semibold">Market Information</h2>
+                        <h4 className="font-semibold">Market Information</h4>
                         <p>Initial Market Cap: {formatSol(token.initial_market_cap)}</p>
                         <p>Current Market Cap: {formatSol(token.market_cap_at_filter)}</p>
                         <p>Filtered At: {formatDate(token.filtered_at)}</p>
                         <p>Criteria Accepted: {formatDate(token.criteria_accepted_date)}</p>
                     </div>
 
-                    {/* Volume Information */}
+                    {/* Ratios and Other Metrics */}
                     <div className="space-y-2">
-                        <h2 className="font-semibold">Volume Information</h2>
-                        <p>Total Volume: {formatSol(token.total_volume)}</p>
-                        <p>Bot Volume: {formatSol(token.bot_volume)}</p>
-                        <p>Non-Bot Volume: {formatSol(token.non_bot_volume)}</p>
+                        <h4 className="font-semibold">Additional Metrics</h4>
+                        <p>Bot Wallet Ratio: {formatRatio(token.bot_wallet_ratio)}</p>
+                        <p>Quality/Bot Ratio: {formatRatio(token.quality_to_bot_ratio)}</p>
+                        <p>Non-Bot Volume %: {formatRatio(token.non_bot_volume_percentage)}%</p>
+                        <p>Total Transactions: {formatNumber(token.total_transactions)}</p>
+                        <p>Bot Transactions: {formatNumber(token.bot_transactions)}</p>
+                        <p>Non-Bot Transactions: {formatNumber(token.non_bot_transactions)}</p>
                     </div>
                 </div>
             </div>
