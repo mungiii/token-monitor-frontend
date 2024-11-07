@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Token, Transaction } from '@/types/token';
 import { fetchAcceptedTokens, fetchTokenTransactions } from '@/utils/api';
+import Loader from '@/components/Loader';
 
 interface GroupedTransactions {
     [key: string]: {
@@ -11,7 +12,6 @@ interface GroupedTransactions {
         count: number;
     }
 }
-
 
 export default function TokenDetailsPage() {
     const router = useRouter();
@@ -90,13 +90,9 @@ export default function TokenDetailsPage() {
             setLoading(true);
             setError(null);
             try {
-                // Fetch and log token details
-                console.log('Fetching token details for ID:', tokenId);
-                const tokens = await fetchAcceptedTokens();
-                console.log('All tokens received:', tokens);
-                
-                const currentToken = tokens.find(t => t.token_id === tokenId);
-                console.log('Current token found:', currentToken);
+                // Fetch all tokens with a large limit to make sure we get the token
+                const allTokens = await fetchAcceptedTokens(1, 1000);
+                const currentToken = allTokens.find(t => t.token_id === tokenId);
                 
                 if (!currentToken) {
                     throw new Error('Token not found');
@@ -104,41 +100,8 @@ export default function TokenDetailsPage() {
                 
                 setToken(currentToken);
     
-                // Fetch and log transactions
-                console.log('Fetching transactions for token:', tokenId);
+                // Fetch transactions
                 const txData = await fetchTokenTransactions(tokenId);
-                console.log('Raw transaction data received:', txData);
-                
-                // Log detailed transaction information
-                if (txData.transactions && txData.transactions.length > 0) {
-                    console.log('First transaction details:', {
-                        txtype: txData.transactions[0].txtype,
-                        traderpublickey: txData.transactions[0].traderpublickey,
-                        wallet_type: txData.transactions[0].wallet_type,
-                        tokenamount: txData.transactions[0].tokenamount,
-                        created_at: txData.transactions[0].created_at,
-                        helius_total_value: txData.transactions[0].helius_total_value,
-                        vsolinbondingcurve: txData.transactions[0].vsolinbondingcurve
-                    });
-                    
-                    // Log counts of null values for each field
-                    const nullCounts = txData.transactions.reduce((acc, tx) => ({
-                        txtype: acc.txtype + (tx.txtype ? 0 : 1),
-                        traderpublickey: acc.traderpublickey + (tx.traderpublickey ? 0 : 1),
-                        wallet_type: acc.wallet_type + (tx.wallet_type ? 0 : 1),
-                        tokenamount: acc.tokenamount + (tx.tokenamount ? 0 : 1),
-                        created_at: acc.created_at + (tx.created_at ? 0 : 1)
-                    }), {
-                        txtype: 0,
-                        traderpublickey: 0,
-                        wallet_type: 0,
-                        tokenamount: 0,
-                        created_at: 0
-                    });
-                    
-                    console.log('Null value counts in transactions:', nullCounts);
-                }
-    
                 const sortedTransactions = txData.transactions.sort((a, b) => 
                     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
                 );
@@ -187,7 +150,7 @@ export default function TokenDetailsPage() {
                 ← Back to Tokens
             </button>
 
-            {/* Token Information - Now matching TokenCard layout */}
+            {/* Token Information */}
             <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm">
                 {/* Basic Information */}
                 <div className="mb-4 border-b pb-4">
@@ -195,7 +158,7 @@ export default function TokenDetailsPage() {
                         {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
                     </h1>
                     <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
-                    <p className="text-sm mt-2">{token.description || '[description is null]'}</p>
+                    <p className="text-sm mt-2">{token.description || ''}</p>
                 </div>
 
                 {/* Feature Fields */}
@@ -203,8 +166,12 @@ export default function TokenDetailsPage() {
                     <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
-                            <p className="text-sm text-gray-600">Days Pre-Acceptance</p>
-                            <p className="font-medium">{token.days_pre_acceptance_criteria || '[null]'}</p>
+                            <p className="text-sm text-gray-600">Minutes Pre-Acceptance</p>
+                            <p className="font-medium">
+                                {token.minutes_pre_acceptance_criteria 
+                                    ? `${token.minutes_pre_acceptance_criteria} minutes`
+                                    : '[null]'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-sm text-gray-600">Wallets Holding</p>
@@ -234,18 +201,14 @@ export default function TokenDetailsPage() {
                     <div className="space-y-2">
                         <h4 className="font-semibold">General Information</h4>
                         <p>Status: {token.status}</p>
-                        <p>Source: {token.source || '[source is null]'}</p>
-                        <p>Creator: {token.creator_address || '[creator is null]'}</p>
+                        <p>Creator: {token.creator || '[creator is null]'}</p>
                         <p>Created: {formatDate(token.created_at)}</p>
-                        <p>Last Updated: {formatDate(token.last_updated)}</p>
                     </div>
 
                     {/* Market Information */}
                     <div className="space-y-2">
                         <h4 className="font-semibold">Market Information</h4>
                         <p>Initial Market Cap: {formatSol(token.initial_market_cap)}</p>
-                        <p>Current Market Cap: {formatSol(token.market_cap_at_filter)}</p>
-                        <p>Filtered At: {formatDate(token.filtered_at)}</p>
                         <p>Criteria Accepted: {formatDate(token.criteria_accepted_date)}</p>
                     </div>
 

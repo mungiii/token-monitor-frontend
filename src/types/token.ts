@@ -1,18 +1,57 @@
+export interface MarketCapSnapshot {
+    token_id: string;
+    snapshot_type: '5m' | '15m' | '30m' | '1h' | '3h' | '1d' | '3d' | '7d' | '30d';
+    market_cap: number;
+    snapshot_date: string;
+    created_at: string;
+}
+
+export interface WalletStats {
+    total_trades: number;
+    tokens_traded: number;
+    net_sol_volume: number;
+    classification_counts: {
+        bot: number;
+        quality: number;
+        unknown: number;
+    };
+    dominant_classification: 'bot' | 'quality' | 'unknown';
+    first_transaction_date: string;
+    last_transaction_date: string;
+    current_token_balances: Array<{
+        token_id: string;
+        balance: number;
+        last_updated: string;
+    }>;
+}
+
+export interface Transaction {
+    transaction_id: number;
+    token_id: string;
+    signature: string;
+    traderpublickey: string;
+    txtype: string;
+    tokenamount: string;
+    newtokenbalance: string;
+    bondingcurvekey: string;
+    vtokensinbondingcurve: string;
+    vsolinbondingcurve: string;
+    marketcapsol: string;
+    wallet_type: 'bot' | 'quality' | 'unknown';
+    created_at: string;
+    helius_total_value: string;
+    sol_volume: number;
+}
+
 export interface Token {
     token_id: string;
     created_at: string;
     name: string;
     symbol: string;
-    description: string;
-    image_url: string;
-    creator_address: string;
+    uri: string;
+    creator: string;
     status: 'new' | 'accepted';
-    source: string;
-    filtered_at: string;
-    market_cap_at_filter: string;
-    last_updated: string;
-    metadata: any;
-    days_pre_acceptance_criteria: number;
+    minutes_pre_acceptance_criteria: number;
     criteria_accepted_date: string;
     initial_market_cap: string;
     total_transacting_wallets: number;
@@ -23,26 +62,12 @@ export interface Token {
     bot_volume: string;
     non_bot_volume: string;
     non_bot_volume_percentage: string;
-    total_transactions: number;
-    bot_transactions: number;
-    non_bot_transactions: number;
+    total_transactions: string;
+    bot_transactions: string;
+    non_bot_transactions: string;
     bot_wallet_ratio: string;
     quality_to_bot_ratio: string;
-}
-
-export interface Transaction {
-    transaction_id: number;
-    token_id: string;
-    signature: string;
-    trader_address: string;
-    tx_type: 'create' | 'buy' | 'sell';
-    token_amount: number;
-    new_token_balance: number;
-    bonding_curve_key: string;
-    v_tokens_in_bonding_curve: number;
-    v_sol_in_bonding_curve: number;
-    market_cap_sol: number;
-    wallet_type: 'bot' | 'quality' | 'unknown';
-    created_at: string;
-    volume_sol: number;
+    creator_sol_balance_usd: string;
+    creator_spl_balance_usd: string;
+    description?: string;
 }
