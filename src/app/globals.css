@@ -1,3 +1,5 @@
+/* global.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,5 +19,30 @@
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-y: scroll;
+}
+
+.animated-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(120deg, #ffffff, #cdd7db);
+  background-size: 200% 200%;
+  animation: gradientAnimation 25s ease infinite;
+  filter: blur(30px);
+  z-index: -1;
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 0% 50%;
+  }
+  80% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }

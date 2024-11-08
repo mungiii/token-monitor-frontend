@@ -1,5 +1,3 @@
-// src/app/page.tsx
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -7,6 +5,7 @@ import { Token } from '@/types/token';
 import { fetchAcceptedTokens } from '@/utils/api';
 import TokenCard from '@/components/TokenCard';
 import Loader from '@/components/Loader';
+import { MarketCapProvider } from '@/contexts/MarketCapContext';
 
 const ITEMS_PER_PAGE = 20;
 
@@ -76,11 +75,11 @@ export default function Home() {
     }, [hasMore, currentPage, initialLoad]);
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <div className="max-w-7xl mx-auto">
-                <div className="py-8 px-4">
+        <MarketCapProvider>
+            <div className="relative min-h-screen z-10">
+                <div className="max-w-7xl mx-auto px-4 py-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold">Accepted Tokens</h1>
+                        <h1 className="text-3xl font-bold">focus</h1>
                         <div className="text-sm text-gray-600">
                             <p>Showing {tokens.length} tokens</p>
                         </div>
@@ -119,6 +118,6 @@ export default function Home() {
                     )}
                 </div>
             </div>
-        </div>
+        </MarketCapProvider>
     );
 }
