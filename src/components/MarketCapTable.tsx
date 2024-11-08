@@ -36,7 +36,7 @@ export default function MarketCapTable({ token, formatSol }: MarketCapTableProps
                     <tbody>
                         <tr>
                             <td className="px-4 py-2 border">
-                                {formatSol(token.initial_market_cap)}
+                                {token.analytics ? formatSol(token.analytics.initial_market_cap) : 'N/A'}
                             </td>
                             {SNAPSHOT_TYPES.map(type => {
                                 const snapshot = snapshots.find(s => s.snapshot_type === type);

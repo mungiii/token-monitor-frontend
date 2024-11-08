@@ -29,7 +29,6 @@ export default function TokenDetailsPage() {
         return isNaN(numValue) ? 'N/A' : numValue.toFixed(2);
     };
 
-    // Format functions (same as TokenCard)
     const formatNumber = (value: string | number | null | undefined, options: {
         decimals?: number;
         useCommas?: boolean;
@@ -78,7 +77,6 @@ export default function TokenDetailsPage() {
         return groups;
     }, {});
     
-    // Sort grouped transactions by earliest transaction
     const sortedGroups = Object.entries(groupedTransactions).sort(([, a], [, b]) => {
         const aDate = new Date(a.transactions[0].created_at).getTime();
         const bDate = new Date(b.transactions[0].created_at).getTime();
@@ -90,7 +88,6 @@ export default function TokenDetailsPage() {
             setLoading(true);
             setError(null);
             try {
-                // Fetch all tokens with a large limit to make sure we get the token
                 const allTokens = await fetchAcceptedTokens(1, 1000);
                 const currentToken = allTokens.find(t => t.token_id === tokenId);
                 
@@ -100,7 +97,6 @@ export default function TokenDetailsPage() {
                 
                 setToken(currentToken);
     
-                // Fetch transactions
                 const txData = await fetchTokenTransactions(tokenId);
                 const sortedTransactions = txData.transactions.sort((a, b) => 
                     new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
@@ -142,7 +138,6 @@ export default function TokenDetailsPage() {
 
     return (
         <div className="container mx-auto p-8">
-            {/* Back Button */}
             <button 
                 onClick={() => router.push('/')}
                 className="mb-6 bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors"
@@ -150,9 +145,7 @@ export default function TokenDetailsPage() {
                 ← Back to Tokens
             </button>
 
-            {/* Token Information */}
             <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm">
-                {/* Basic Information */}
                 <div className="mb-4 border-b pb-4">
                     <h1 className="text-lg font-semibold">
                         {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
@@ -161,43 +154,43 @@ export default function TokenDetailsPage() {
                     <p className="text-sm mt-2">{token.description || ''}</p>
                 </div>
 
-                {/* Feature Fields */}
-                <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div>
-                            <p className="text-sm text-gray-600">Minutes Pre-Acceptance</p>
-                            <p className="font-medium">
-                                {token.minutes_pre_acceptance_criteria 
-                                    ? `${token.minutes_pre_acceptance_criteria} minutes`
-                                    : '[null]'}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Wallets Holding</p>
-                            <p className="font-medium">{formatNumber(token.wallets_holding)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Total Volume</p>
-                            <p className="font-medium">{formatSol(token.total_volume)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Bot Wallets</p>
-                            <p className="font-medium">{formatNumber(token.suspected_bot_wallets)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Quality Wallets</p>
-                            <p className="font-medium">{formatNumber(token.quality_wallets)}</p>
-                        </div>
-                        <div>
-                            <p className="text-sm text-gray-600">Non-Bot Volume</p>
-                            <p className="font-medium">{formatSol(token.non_bot_volume)}</p>
+                {token.analytics && (
+                    <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div>
+                                <p className="text-sm text-gray-600">Minutes Pre-Acceptance</p>
+                                <p className="font-medium">
+                                    {token.analytics.minutes_pre_acceptance_criteria 
+                                        ? `${token.analytics.minutes_pre_acceptance_criteria} minutes`
+                                        : '[null]'}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Wallets Holding</p>
+                                <p className="font-medium">{formatNumber(token.analytics.wallets_holding)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Total Volume</p>
+                                <p className="font-medium">{formatSol(token.analytics.total_volume)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Bot Wallets</p>
+                                <p className="font-medium">{formatNumber(token.analytics.suspected_bot_wallets)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Quality Wallets</p>
+                                <p className="font-medium">{formatNumber(token.analytics.quality_wallets)}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-600">Non-Bot Volume</p>
+                                <p className="font-medium">{formatSol(token.analytics.non_bot_volume)}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Creation and Status Information */}
                     <div className="space-y-2">
                         <h4 className="font-semibold">General Information</h4>
                         <p>Status: {token.status}</p>
@@ -205,27 +198,24 @@ export default function TokenDetailsPage() {
                         <p>Created: {formatDate(token.created_at)}</p>
                     </div>
 
-                    {/* Market Information */}
                     <div className="space-y-2">
                         <h4 className="font-semibold">Market Information</h4>
-                        <p>Initial Market Cap: {formatSol(token.initial_market_cap)}</p>
-                        <p>Criteria Accepted: {formatDate(token.criteria_accepted_date)}</p>
+                        <p>Initial Market Cap: {token.analytics ? formatSol(token.analytics.initial_market_cap) : 'N/A'}</p>
+                        <p>Criteria Accepted: {token.analytics ? formatDate(token.analytics.criteria_accepted_date) : 'N/A'}</p>
                     </div>
 
-                    {/* Ratios and Other Metrics */}
                     <div className="space-y-2">
                         <h4 className="font-semibold">Additional Metrics</h4>
-                        <p>Bot Wallet Ratio: {formatRatio(token.bot_wallet_ratio)}</p>
-                        <p>Quality/Bot Ratio: {formatRatio(token.quality_to_bot_ratio)}</p>
-                        <p>Non-Bot Volume %: {formatRatio(token.non_bot_volume_percentage)}%</p>
-                        <p>Total Transactions: {formatNumber(token.total_transactions)}</p>
-                        <p>Bot Transactions: {formatNumber(token.bot_transactions)}</p>
-                        <p>Non-Bot Transactions: {formatNumber(token.non_bot_transactions)}</p>
+                        <p>Bot Wallet Ratio: {token.analytics ? formatRatio(token.analytics.bot_wallet_ratio) : 'N/A'}</p>
+                        <p>Quality/Bot Ratio: {token.analytics ? formatRatio(token.analytics.quality_to_bot_ratio) : 'N/A'}</p>
+                        <p>Non-Bot Volume %: {token.analytics ? formatRatio(token.analytics.non_bot_volume_percentage) : 'N/A'}%</p>
+                        <p>Total Transactions: {token.analytics ? formatNumber(token.analytics.total_transactions) : 'N/A'}</p>
+                        <p>Bot Transactions: {token.analytics ? formatNumber(token.analytics.bot_transactions) : 'N/A'}</p>
+                        <p>Non-Bot Transactions: {token.analytics ? formatNumber(token.analytics.non_bot_transactions) : 'N/A'}</p>
                     </div>
                 </div>
             </div>
 
-            {/* Transactions Section */}
             <div className="border rounded-lg p-6 bg-white shadow-sm">
                 <h2 className="text-2xl font-bold mb-4">Transactions</h2>
                 
@@ -233,7 +223,6 @@ export default function TokenDetailsPage() {
                     <div className="space-y-6">
                         {sortedGroups.map(([traderAddress, group]) => (
                             <div key={traderAddress} className="border rounded-lg">
-                                {/* Trader Header */}
                                 <div className="bg-gray-50 p-4 rounded-t-lg border-b">
                                     <div className="flex items-center justify-between">
                                         <button
@@ -248,7 +237,6 @@ export default function TokenDetailsPage() {
                                     </div>
                                 </div>
 
-                                {/* Transactions Table */}
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full">
                                         <thead>

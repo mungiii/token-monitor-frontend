@@ -39,35 +39,47 @@ export interface Transaction {
     marketcapsol: string;
     wallet_type: 'bot' | 'quality' | 'unknown';
     created_at: string;
-    helius_total_value: string;
     sol_volume: number;
+    traders_token_balance_at_acceptance: string;
+    still_holding_at_acceptance: boolean;
+    helius_total_value: string;
 }
 
 export interface Token {
+    // Initial token data
     token_id: string;
     created_at: string;
     name: string;
     symbol: string;
     uri: string;
-    creator: string;
     status: 'new' | 'accepted';
-    minutes_pre_acceptance_criteria: number;
-    criteria_accepted_date: string;
-    initial_market_cap: string;
-    total_transacting_wallets: number;
-    wallets_holding: number;
-    suspected_bot_wallets: number;
-    quality_wallets: number;
-    total_volume: string;
-    bot_volume: string;
-    non_bot_volume: string;
-    non_bot_volume_percentage: string;
-    total_transactions: string;
-    bot_transactions: string;
-    non_bot_transactions: string;
-    bot_wallet_ratio: string;
-    quality_to_bot_ratio: string;
-    creator_sol_balance_usd: string;
-    creator_spl_balance_usd: string;
+    creator: string;
     description?: string;
+    image?: string;
+    twitter?: string;
+    website?: string;
+    telegram?: string;
+
+    // Analytics data
+    analytics: {
+        minutes_pre_acceptance_criteria: number;
+        criteria_accepted_date: string;
+        initial_market_cap: string;
+        total_transacting_wallets: number;
+        wallets_holding: number;
+        suspected_bot_wallets: number;
+        quality_wallets: number;
+        total_volume: string;
+        bot_volume: string;
+        non_bot_volume: string;
+        non_bot_volume_percentage: string;
+        total_transactions: string;
+        bot_transactions: string;
+        non_bot_transactions: string;
+        bot_wallet_ratio: string;
+        quality_to_bot_ratio: string;
+        creator_sol_balance_usd: string;
+        creator_spl_balance_usd: string;
+        helius_total_value: string;
+    } | null;
 }

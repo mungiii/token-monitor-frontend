@@ -66,44 +66,62 @@ export default function TokenCard({ token }: TokenCardProps) {
                 <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
                 <p className="text-sm mt-2">{token.description || ''}</p>
             </div>
-
+    
             {/* Feature Fields */}
-            <div className="p-4 bg-blue-50 border-b border-blue-100">
-                <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                        <p className="text-sm text-gray-600">Pre-Acceptance Time</p>
-                        <p className="font-medium">{formatMinutes(token.minutes_pre_acceptance_criteria)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Wallets Holding</p>
-                        <p className="font-medium">{formatNumber(token.wallets_holding)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Total Volume</p>
-                        <p className="font-medium">{formatSol(token.total_volume)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Bot Wallets</p>
-                        <p className="font-medium">{formatNumber(token.suspected_bot_wallets)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Quality Wallets</p>
-                        <p className="font-medium">{formatNumber(token.quality_wallets)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Non-Bot Volume</p>
-                        <p className="font-medium">{formatSol(token.non_bot_volume)}</p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600">Creator Balance (SOL)</p>
-                        <p className="font-medium">{formatSol(token.creator_sol_balance_usd)}</p>
+            {token.analytics && (
+                <div className="p-4 bg-blue-50 border-b border-blue-100">
+                    <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <p className="text-sm text-gray-600">Pre-Acceptance Time</p>
+                            <p className="font-medium">
+                                {formatMinutes(token.analytics.minutes_pre_acceptance_criteria)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Wallets Holding</p>
+                            <p className="font-medium">
+                                {formatNumber(token.analytics.wallets_holding)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Total Volume</p>
+                            <p className="font-medium">
+                                {formatSol(token.analytics.total_volume)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Bot Wallets</p>
+                            <p className="font-medium">
+                                {formatNumber(token.analytics.suspected_bot_wallets)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Quality Wallets</p>
+                            <p className="font-medium">
+                                {formatNumber(token.analytics.quality_wallets)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Non-Bot Volume</p>
+                            <p className="font-medium">
+                                {formatSol(token.analytics.non_bot_volume)}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Creator Balance (SOL)</p>
+                            <p className="font-medium">
+                                {formatSol(token.analytics.creator_sol_balance_usd)}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
+    
             <div className="p-4 border-b">
                 <MarketCapTable token={token} formatSol={formatSol} />
             </div>
+    
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
                 {/* Creation and Status Information */}
                 <div className="p-4 space-y-2">
@@ -112,24 +130,24 @@ export default function TokenCard({ token }: TokenCardProps) {
                     <p>Creator: {token.creator || '[creator is null]'}</p>
                     <p>Created: {formatDate(token.created_at)}</p>
                 </div>
-
+    
                 {/* Market Information */}
                 <div className="p-4 space-y-2">
                     <h4 className="font-semibold">Market Information</h4>
-                    <p>Initial Market Cap: {formatSol(token.initial_market_cap)}</p>
-                    <p>Criteria Accepted: {formatDate(token.criteria_accepted_date)}</p>
+                    <p>Initial Market Cap: {token.analytics ? formatSol(token.analytics.initial_market_cap) : 'N/A'}</p>
+                    <p>Criteria Accepted: {token.analytics ? formatDate(token.analytics.criteria_accepted_date) : 'N/A'}</p>
                 </div>
-
+    
                 {/* Ratios and Other Metrics */}
                 <div className="p-4 space-y-2">
                     <h4 className="font-semibold">Additional Metrics</h4>
-                    <p>Bot Wallet Ratio: {token.bot_wallet_ratio}</p>
-                    <p>Quality/Bot Ratio: {token.quality_to_bot_ratio}</p>
-                    <p>Non-Bot Volume %: {token.non_bot_volume_percentage}%</p>
-                    <p>Total Transactions: {formatNumber(token.total_transactions)}</p>
+                    <p>Bot Wallet Ratio: {token.analytics ? token.analytics.bot_wallet_ratio : 'N/A'}</p>
+                    <p>Quality/Bot Ratio: {token.analytics ? token.analytics.quality_to_bot_ratio : 'N/A'}</p>
+                    <p>Non-Bot Volume %: {token.analytics ? `${token.analytics.non_bot_volume_percentage}%` : 'N/A'}</p>
+                    <p>Total Transactions: {token.analytics ? formatNumber(token.analytics.total_transactions) : 'N/A'}</p>
                 </div>
             </div>
-
+    
             {/* View Details Button */}
             <div className="p-4 flex justify-end border-t">
                 <button
@@ -139,8 +157,6 @@ export default function TokenCard({ token }: TokenCardProps) {
                     Token Details
                 </button>
             </div>
-
-
         </div>
     );
 }

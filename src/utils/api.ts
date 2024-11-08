@@ -13,18 +13,18 @@ export async function fetchAcceptedTokens(page: number = 1, limit: number = 20):
         `${API_URL}/api/tokens`,
         { cache: 'no-store' }
     );
-    
+
     if (!response.ok) {
         throw new Error('Failed to fetch tokens');
     }
-    
+
     const allTokens = await response.json();
     
-    // Calculate the slice for this page
+    // Calculate pagination
     const startIndex = (page - 1) * limit;
     const endIndex = startIndex + limit;
-    
-    return Array.isArray(allTokens) 
+
+    return Array.isArray(allTokens)
         ? allTokens.slice(startIndex, endIndex)
         : [];
 }
