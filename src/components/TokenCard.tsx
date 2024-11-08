@@ -1,15 +1,14 @@
-// src/components/TokenCard.tsx
-
+import React from 'react';
 import { Token } from '@/types/token';
 import { useRouter } from 'next/navigation';
 import MarketCapTable from './MarketCapTable';
 
-
 interface TokenCardProps {
     token: Token;
+    hideDetailsButton?: boolean;  // Add the new prop to the interface
 }
 
-export default function TokenCard({ token }: TokenCardProps) {
+const TokenCard: React.FC<TokenCardProps> = ({ token, hideDetailsButton = false }) => {  // Destructure the prop here
     const router = useRouter();
 
     const formatNumber = (value: string | number | null | undefined, options: {
@@ -52,22 +51,26 @@ export default function TokenCard({ token }: TokenCardProps) {
         });
     };
 
-    const handleViewDetails = () => {
-        router.push(`/tokens/${token.token_id}`);
-    };
-
     return (
         <div className="border rounded-lg shadow-sm hover:shadow-md transition-shadow">
-            {/* Basic Information */}
-            <div className="p-4 border-b">
-                <h3 className="text-lg font-semibold">
-                    {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
-                </h3>
-                <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
-                <p className="text-sm mt-2">{token.description || ''}</p>
+            <div className="p-4 border-b flex gap-4">
+                {token.image && (
+                    <img 
+                        src={token.image}
+                        alt={token.name || 'Token image'}
+                        className="w-16 h-16 object-cover rounded-lg"
+                    />
+                )}
+                
+                <div>
+                    <h3 className="text-lg font-semibold">
+                        {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
+                    </h3>
+                    <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
+                    <p className="text-sm mt-2">{token.description || ''}</p>
+                </div>
             </div>
-    
-            {/* Feature Fields */}
+
             {token.analytics && (
                 <div className="p-4 bg-blue-50 border-b border-blue-100">
                     <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
@@ -117,28 +120,25 @@ export default function TokenCard({ token }: TokenCardProps) {
                     </div>
                 </div>
             )}
-    
+
             <div className="p-4 border-b">
                 <MarketCapTable token={token} formatSol={formatSol} />
             </div>
-    
+
             <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x">
-                {/* Creation and Status Information */}
                 <div className="p-4 space-y-2">
                     <h4 className="font-semibold">General Information</h4>
                     <p>Status: {token.status}</p>
                     <p>Creator: {token.creator || '[creator is null]'}</p>
                     <p>Created: {formatDate(token.created_at)}</p>
                 </div>
-    
-                {/* Market Information */}
+
                 <div className="p-4 space-y-2">
                     <h4 className="font-semibold">Market Information</h4>
                     <p>Initial Market Cap: {token.analytics ? formatSol(token.analytics.initial_market_cap) : 'N/A'}</p>
                     <p>Criteria Accepted: {token.analytics ? formatDate(token.analytics.criteria_accepted_date) : 'N/A'}</p>
                 </div>
-    
-                {/* Ratios and Other Metrics */}
+
                 <div className="p-4 space-y-2">
                     <h4 className="font-semibold">Additional Metrics</h4>
                     <p>Bot Wallet Ratio: {token.analytics ? token.analytics.bot_wallet_ratio : 'N/A'}</p>
@@ -147,16 +147,61 @@ export default function TokenCard({ token }: TokenCardProps) {
                     <p>Total Transactions: {token.analytics ? formatNumber(token.analytics.total_transactions) : 'N/A'}</p>
                 </div>
             </div>
-    
-            {/* View Details Button */}
-            <div className="p-4 flex justify-end border-t">
-                <button
-                    onClick={() => router.push(`/tokens/${token.token_id}`)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+
+            <div className="p-4 flex justify-end gap-3 border-t">
+                {token.twitter && (
+                    <a 
+                        href={token.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Twitter
+                    </a>
+                )}
+                
+                {token.website && (
+                    <a 
+                        href={token.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Website
+                    </a>
+                )}
+                
+                {token.telegram && (
+                    <a 
+                        href={token.telegram}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Telegram
+                    </a>
+                )}
+
+                <a 
+                    href={`https://pump.fun/${token.token_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                    Token Details
-                </button>
+                    Pump
+                </a>
+                
+                {!hideDetailsButton && (
+                    <button
+                        onClick={() => router.push(`/tokens/${token.token_id}`)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+                    >
+                        Token Details
+                    </button>
+                )}
             </div>
         </div>
     );
-}
+};
+
+export default TokenCard;

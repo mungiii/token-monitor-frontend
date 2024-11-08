@@ -1,16 +1,23 @@
+// src/app/tokens/[token_id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Token, Transaction } from '@/types/token';
 import { fetchAcceptedTokens, fetchTokenTransactions } from '@/utils/api';
+import TokenCard from '@/components/TokenCard';
 import Loader from '@/components/Loader';
 
+interface WalletGroup {
+    transactions: Transaction[];
+    count: number;
+    walletType: string;
+    balanceAtAcceptance: string | null;
+    currentBalance: string | null;
+}
+
 interface GroupedTransactions {
-    [key: string]: {
-        transactions: Transaction[];
-        count: number;
-    }
+    [key: string]: WalletGroup;
 }
 
 export default function TokenDetailsPage() {
@@ -22,36 +29,6 @@ export default function TokenDetailsPage() {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
-    const formatRatio = (value: string | number | null | undefined) => {
-        if (value == null) return 'N/A';
-        const numValue = typeof value === 'string' ? parseFloat(value) : value;
-        return isNaN(numValue) ? 'N/A' : numValue.toFixed(2);
-    };
-
-    const formatNumber = (value: string | number | null | undefined, options: {
-        decimals?: number;
-        useCommas?: boolean;
-        prefix?: string;
-    } = {}) => {
-        const { decimals = 0, useCommas = true, prefix = '' } = options;
-        
-        if (value == null) return 'N/A';
-        const numValue = typeof value === 'string' ? parseFloat(value) : value;
-        
-        if (isNaN(numValue)) return 'N/A';
-        
-        const formatted = numValue.toFixed(decimals);
-        const withCommas = useCommas 
-            ? parseInt(formatted).toLocaleString('en-US')
-            : formatted;
-            
-        return `${prefix}${withCommas}`;
-    };
-
-    const formatSol = (value: string | number | null | undefined) => {
-        return formatNumber(value, { decimals: 2, useCommas: true, prefix: '◎ ' });
-    };
 
     const formatDate = (dateString: string | null | undefined) => {
         if (!dateString) return '[date is null]';
@@ -60,8 +37,17 @@ export default function TokenDetailsPage() {
             month: 'short',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true,
+            timeZoneName: undefined  // Remove timezone to keep the format clean
         });
+    };
+
+    const formatNumber = (value: string | number | null | undefined) => {
+        if (!value) return '0';
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        return num.toLocaleString(undefined, { maximumFractionDigits: 0 });
     };
 
     const groupedTransactions = transactions.reduce((groups: GroupedTransactions, transaction) => {
@@ -69,18 +55,26 @@ export default function TokenDetailsPage() {
         if (!groups[key]) {
             groups[key] = {
                 transactions: [],
-                count: 0
+                count: 0,
+                walletType: transaction.wallet_type,
+                balanceAtAcceptance: transaction.traders_token_balance_at_acceptance,
+                currentBalance: null
             };
         }
         groups[key].transactions.push(transaction);
         groups[key].count += 1;
+
+        // Update current balance to the latest newtokenbalance
+        if (transaction.newtokenbalance) {
+            groups[key].currentBalance = transaction.newtokenbalance;
+        }
         return groups;
     }, {});
     
     const sortedGroups = Object.entries(groupedTransactions).sort(([, a], [, b]) => {
         const aDate = new Date(a.transactions[0].created_at).getTime();
         const bDate = new Date(b.transactions[0].created_at).getTime();
-        return aDate - bDate;
+        return bDate - aDate; // Changed to show newest first
     });
 
     useEffect(() => {
@@ -99,7 +93,7 @@ export default function TokenDetailsPage() {
     
                 const txData = await fetchTokenTransactions(tokenId);
                 const sortedTransactions = txData.transactions.sort((a, b) => 
-                    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime() // Changed to show newest first
                 );
                 setTransactions(sortedTransactions);
                 
@@ -116,26 +110,6 @@ export default function TokenDetailsPage() {
         }
     }, [tokenId]);
 
-    if (loading) return (
-        <div className="container mx-auto p-8">
-            <div className="text-center">Loading token details...</div>
-        </div>
-    );
-
-    if (error) return (
-        <div className="container mx-auto p-8">
-            <div className="text-red-500">{error}</div>
-            <button 
-                onClick={() => router.push('/')}
-                className="mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-                Back to Tokens
-            </button>
-        </div>
-    );
-
-    if (!token) return null;
-
     return (
         <div className="container mx-auto p-8">
             <button 
@@ -145,143 +119,103 @@ export default function TokenDetailsPage() {
                 ← Back to Tokens
             </button>
 
-            <div className="mb-8 border rounded-lg p-6 bg-white shadow-sm">
-                <div className="mb-4 border-b pb-4">
-                    <h1 className="text-lg font-semibold">
-                        {token.name || '[name is null]'} ({token.symbol || '[symbol is null]'})
-                    </h1>
-                    <p className="text-sm text-gray-600 font-mono">Token ID: {token.token_id}</p>
-                    <p className="text-sm mt-2">{token.description || ''}</p>
+            {loading ? (
+                <div className="text-center">
+                    <Loader />
                 </div>
+            ) : error ? (
+                <div className="text-red-500">{error}</div>
+            ) : token ? (
+                <div className="space-y-8">
+                    <TokenCard token={token} hideDetailsButton={true} />
 
-                {token.analytics && (
-                    <div className="mb-4 bg-blue-50 p-4 rounded-lg border border-blue-100">
-                        <h4 className="font-semibold text-blue-800 mb-3">Feature Fields</h4>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                            <div>
-                                <p className="text-sm text-gray-600">Minutes Pre-Acceptance</p>
-                                <p className="font-medium">
-                                    {token.analytics.minutes_pre_acceptance_criteria 
-                                        ? `${token.analytics.minutes_pre_acceptance_criteria} minutes`
-                                        : '[null]'}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Wallets Holding</p>
-                                <p className="font-medium">{formatNumber(token.analytics.wallets_holding)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Total Volume</p>
-                                <p className="font-medium">{formatSol(token.analytics.total_volume)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Bot Wallets</p>
-                                <p className="font-medium">{formatNumber(token.analytics.suspected_bot_wallets)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Quality Wallets</p>
-                                <p className="font-medium">{formatNumber(token.analytics.quality_wallets)}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-600">Non-Bot Volume</p>
-                                <p className="font-medium">{formatSol(token.analytics.non_bot_volume)}</p>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    <div className="border rounded-lg p-6 bg-white shadow-sm">
+                        <h2 className="text-2xl font-bold mb-4">Transactions</h2>
+                        
+                        {sortedGroups.length > 0 ? (
+                            <div className="space-y-6">
+                                {sortedGroups.map(([traderAddress, group]) => (
+                                    <div key={traderAddress} className="border rounded-lg">
+                                        <div className="bg-gray-50 p-4 rounded-t-lg border-b">
+                                            <div className="flex flex-col space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            onClick={() => router.push(`/wallets/${traderAddress}?from_token=${token.token_id}`)}
+                                                            className="text-blue-600 hover:text-blue-800 font-mono text-sm underline"
+                                                        >
+                                                            {traderAddress}
+                                                        </button>
+                                                        <span className={`text-sm px-2 py-1 rounded-full ${
+                                                            group.walletType === 'quality' ? 'bg-green-100 text-green-800' :
+                                                            group.walletType === 'bot' ? 'bg-red-100 text-red-800' :
+                                                            'bg-gray-100 text-gray-800'
+                                                        }`}>
+                                                            {group.walletType || 'unknown'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-sm text-gray-600">
+                                                        {group.count} transaction{group.count !== 1 ? 's' : ''}
+                                                    </span>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-600">Total Wallet Balance at Time of Acceptance: </span>
+                                                        <span className="font-medium">
+                                                            {formatNumber(group.balanceAtAcceptance)}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600"> Tokens Held at Time of Acceptance </span>
+                                                        <span className="font-medium">
+                                                            {formatNumber(group.currentBalance)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <h4 className="font-semibold">General Information</h4>
-                        <p>Status: {token.status}</p>
-                        <p>Creator: {token.creator || '[creator is null]'}</p>
-                        <p>Created: {formatDate(token.created_at)}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <h4 className="font-semibold">Market Information</h4>
-                        <p>Initial Market Cap: {token.analytics ? formatSol(token.analytics.initial_market_cap) : 'N/A'}</p>
-                        <p>Criteria Accepted: {token.analytics ? formatDate(token.analytics.criteria_accepted_date) : 'N/A'}</p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <h4 className="font-semibold">Additional Metrics</h4>
-                        <p>Bot Wallet Ratio: {token.analytics ? formatRatio(token.analytics.bot_wallet_ratio) : 'N/A'}</p>
-                        <p>Quality/Bot Ratio: {token.analytics ? formatRatio(token.analytics.quality_to_bot_ratio) : 'N/A'}</p>
-                        <p>Non-Bot Volume %: {token.analytics ? formatRatio(token.analytics.non_bot_volume_percentage) : 'N/A'}%</p>
-                        <p>Total Transactions: {token.analytics ? formatNumber(token.analytics.total_transactions) : 'N/A'}</p>
-                        <p>Bot Transactions: {token.analytics ? formatNumber(token.analytics.bot_transactions) : 'N/A'}</p>
-                        <p>Non-Bot Transactions: {token.analytics ? formatNumber(token.analytics.non_bot_transactions) : 'N/A'}</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="border rounded-lg p-6 bg-white shadow-sm">
-                <h2 className="text-2xl font-bold mb-4">Transactions</h2>
-                
-                {sortedGroups.length > 0 ? (
-                    <div className="space-y-6">
-                        {sortedGroups.map(([traderAddress, group]) => (
-                            <div key={traderAddress} className="border rounded-lg">
-                                <div className="bg-gray-50 p-4 rounded-t-lg border-b">
-                                    <div className="flex items-center justify-between">
-                                        <button
-                                            onClick={() => router.push(`/wallets/${traderAddress}?from_token=${token.token_id}`)}
-                                            className="text-blue-600 hover:text-blue-800 font-mono text-sm underline"
-                                        >
-                                            {traderAddress}
-                                        </button>
-                                        <span className="text-sm text-gray-600">
-                                            {group.count} transaction{group.count !== 1 ? 's' : ''}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full">
-                                        <thead>
-                                            <tr className="bg-gray-50">
-                                                <th className="px-4 py-2 text-left">Type</th>
-                                                <th className="px-4 py-2 text-right">Amount</th>
-                                                <th className="px-4 py-2 text-left">Wallet Type</th>
-                                                <th className="px-4 py-2 text-left">Created At</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {group.transactions
-                                                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                                                .map((tx) => (
-                                                    <tr key={tx.signature} className="border-t">
-                                                        <td className="px-4 py-2 capitalize">
-                                                            {tx.txtype || 'null'}
-                                                        </td>
-                                                        <td className="px-4 py-2 text-right">
-                                                            {tx.tokenamount 
-                                                                ? formatNumber(tx.tokenamount)
-                                                                : 'null'}
-                                                        </td>
-                                                        <td className="px-4 py-2 capitalize">
-                                                            {tx.wallet_type || 'null'}
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            {tx.created_at 
-                                                                ? formatDate(tx.created_at)
-                                                                : 'null'}
-                                                        </td>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full">
+                                                <thead>
+                                                    <tr className="bg-gray-50">
+                                                        <th className="px-4 py-2 text-left">Type</th>
+                                                        <th className="px-4 py-2 text-right">Amount</th>
+                                                        <th className="px-4 py-2 text-left">Created At</th>
                                                     </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                </thead>
+                                                <tbody>
+                                                    {group.transactions
+                                                        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                                                        .map((tx) => (
+                                                            <tr key={tx.signature} className="border-t">
+                                                                <td className="px-4 py-2 capitalize">
+                                                                    {tx.txtype || 'null'}
+                                                                </td>
+                                                                <td className="px-4 py-2 text-right">
+                                                                    {tx.tokenamount 
+                                                                        ? formatNumber(tx.tokenamount)
+                                                                        : 'null'}
+                                                                </td>
+                                                                <td className="px-4 py-2">
+                                                                    {formatDate(tx.created_at)}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <div className="text-center py-4 text-gray-500">
+                                No transactions found for this token.
+                            </div>
+                        )}
                     </div>
-                ) : (
-                    <div className="text-center py-4 text-gray-500">
-                        No transactions found for this token.
-                    </div>
-                )}
-            </div>
+                </div>
+            ) : null}
         </div>
     );
 }
